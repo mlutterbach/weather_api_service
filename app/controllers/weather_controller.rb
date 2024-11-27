@@ -6,12 +6,13 @@ class WeatherController < ApplicationController
     city = params[:city]
     redis = Redis.new
     cache_key = "weather:#{city}"
+    encoded_city = URI.encode_www_form_component(city)
 
     if redis.exists?(cache_key)
       render json: JSON.parse(redis.get(cache_key))
     else
       api_key = ENV['VISUAL_CROSSING_API_KEY']
-      response = HTTParty.get("https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/#{city}?key=#{api_key}")
+      response = HTTParty.get("https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/#{encoded_city}?key=#{api_key}")
 
       if response.success?
         redis.set(cache_key, response.body, ex: 12 * 60 * 60)
